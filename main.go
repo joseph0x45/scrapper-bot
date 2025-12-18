@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/playwright-community/playwright-go"
 )
 
@@ -25,6 +26,8 @@ func parseEuro(s string) (float64, error) {
 }
 
 func main() {
+	godotenv.Load()
+	log.Println("[INFO] Installing playwright")
 	err := playwright.Install(&playwright.RunOptions{
 		SkipInstallBrowsers: true,
 	})
@@ -40,11 +43,14 @@ func main() {
 		parsed, _ := strconv.ParseFloat(envCeiling, 64)
 		return parsed
 	}()
+	log.Println("[INFO] Ceiling set to", ceiling)
 	env := os.Getenv("ENV")
 	if env == "" {
 		env = "debug"
 	}
+	log.Println("[INFO] ENV", env)
 	discordBotURL := os.Getenv("DISCORD_BOT_URL")
+	log.Println("[INFO] Discord bot URL", discordBotURL)
 	pw, err := playwright.Run()
 	if err != nil {
 		log.Fatalf("could not start playwright: %v", err)
