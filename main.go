@@ -25,6 +25,13 @@ func parseEuro(s string) (float64, error) {
 }
 
 func main() {
+	err := playwright.Install(&playwright.RunOptions{
+		SkipInstallBrowsers: true,
+	})
+	if err != nil {
+		log.Println("[ERROR] Failed to install playwright")
+		panic(err)
+	}
 	ceiling := func() float64 {
 		envCeiling := os.Getenv("CEILING")
 		if envCeiling == "" {
@@ -33,15 +40,22 @@ func main() {
 		parsed, _ := strconv.ParseFloat(envCeiling, 64)
 		return parsed
 	}()
+	env := os.Getenv("ENV")
+	if env == "" {
+		env = "debug"
+	}
 	discordBotURL := os.Getenv("DISCORD_BOT_URL")
 	pw, err := playwright.Run()
 	if err != nil {
 		log.Fatalf("could not start playwright: %v", err)
 	}
-	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
-		Headless: playwright.Bool(false),
-		Channel:  playwright.String("chrome"),
-	})
+	options := playwright.BrowserTypeLaunchOptions{
+		Headless: playwright.Bool(env != "debug"),
+	}
+	if env == "debug" {
+		options.Channel = playwright.String("chrome")
+	}
+	browser, err := pw.Chromium.Launch(options)
 	if err != nil {
 		log.Fatalf("could not launch browser: %v", err)
 	}
