@@ -91,12 +91,18 @@ func main() {
 			}); err != nil {
 				log.Println("reload failed:", err)
 			}
+			log.Println("[INFO] Reading value")
 			value, err := page.Locator("p.mt-3.mb-0.text-muted > strong:nth-of-type(3)").First().TextContent()
 			if err != nil {
 				log.Println("[ERROR]: Failed to get value: ", err.Error())
 				continue
 			}
 			parsed, err := parseEuro(value)
+			if err != nil {
+				log.Println("[ERROR] Failed to parse value into Euro", err.Error())
+				continue
+			}
+			log.Println("[INFO] Read value", parsed)
 			if parsed >= ceiling {
 				message := fmt.Sprintf(
 					"Value exceeded %f",
