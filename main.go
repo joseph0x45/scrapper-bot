@@ -58,7 +58,8 @@ func main() {
 	options := playwright.BrowserTypeLaunchOptions{
 		Headless: playwright.Bool(env != "debug"),
 	}
-	if env == "debug" {
+	channel := os.Getenv("CHANNEL")
+	if channel == "" {
 		options.Channel = playwright.String("chrome")
 	}
 	browser, err := pw.Chromium.Launch(options)
