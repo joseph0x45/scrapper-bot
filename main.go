@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
 	"os/signal"
 	"strconv"
 	"strings"
@@ -13,16 +15,25 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
+const ryanDiscordID = "724940292943249458"
+
 func parseEuro(s string) (float64, error) {
 	s = strings.Trim(s, " €")
-	// Remove thousands separator (dot)
 	s = strings.ReplaceAll(s, ".", "")
-	// Replace decimal comma with dot
 	s = strings.ReplaceAll(s, ",", ".")
 	return strconv.ParseFloat(s, 64)
 }
 
 func main() {
+	ceiling := func() float64 {
+		envCeiling := os.Getenv("CEILING")
+		if envCeiling == "" {
+			envCeiling = "9000"
+		}
+		parsed, _ := strconv.ParseFloat(envCeiling, 64)
+		return parsed
+	}()
+	discordBotURL := os.Getenv("DISCORD_BOT_URL")
 	pw, err := playwright.Run()
 	if err != nil {
 		log.Fatalf("could not start playwright: %v", err)
@@ -65,10 +76,19 @@ func main() {
 				continue
 			}
 			parsed, err := parseEuro(value)
-			if parsed >= 11000 {
-				//send message to discord
+			if parsed >= ceiling {
+				message := fmt.Sprintf(
+					"Value exceeded %f",
+					ceiling,
+				)
+				res, err := http.Get(discordBotURL + fmt.Sprintf("/message?recipient=%s&message=%s", ryanDiscordID, message))
+				if err != nil {
+					log.Println("[ERROR] Failed to send HTTP request:", err.Error())
+				}
+				if res.StatusCode != 200 {
+					log.Println("[ERROR] Could not send message to user: ", res.Status)
+				}
 			}
-			fmt.Println(parsed)
 
 		case <-ctx.Done():
 			log.Println("shutting down watcher")
